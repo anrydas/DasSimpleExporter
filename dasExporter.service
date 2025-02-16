@@ -1,0 +1,14 @@
+[Unit]
+ Description = Das Simple Exporter for Prometheus
+
+[Service]
+ User = das
+ Group = das
+ WorkingDirectory = /path/to/DasExporter
+ ExecStart = /path/to/DasExporter/start.sh
+ Restart = always
+ RestartSec = 5
+ SyslogIdentifier = DasExporter
+
+[Install]
+ WantedBy = multi-user.target

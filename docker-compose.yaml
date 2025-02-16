@@ -1,0 +1,19 @@
+services:
+  das_exporter:
+    build: .
+    container_name: "DasExporter"
+    restart: "unless-stopped"
+#    networks:
+#      - internal
+    user: "1000"
+    ports:
+      - 9010:15200
+    volumes:
+      - ./data/config:/usr/src/app/configs
+      - /:/usr/src/app/FS/root:ro
+      - /home:/usr/src/app/FS/home:ro
+
+#networks:
+#  internal:
+#    name: internal
+#    external: true

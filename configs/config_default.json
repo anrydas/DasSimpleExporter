@@ -1,0 +1,13 @@
+{
+  "monitor": {
+    "config": {
+      "debug": "false",
+      "print_info": "false",
+      "interval_seconds": 30,
+      "uptime_update_seconds": 60,
+      "port": 15200,
+      "stop_file_name": "/stop",
+      "response_path_separator": "|"
+    }
+  }
+}

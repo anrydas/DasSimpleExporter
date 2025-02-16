@@ -1,0 +1,13 @@
+{
+  "monitor": {
+    "instance_prefix": "",
+    "metrics": {
+      "disk": [],
+      "health": [],
+      "ping": [],
+      "iface": [],
+      "rest_value": [],
+      "shell_value": []
+    }
+  }
+}
