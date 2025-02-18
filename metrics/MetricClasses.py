@@ -4,6 +4,7 @@ from abc import abstractmethod
 import time
 import platform
 import subprocess
+from linecache import cache
 
 import requests
 import psutil
@@ -113,8 +114,13 @@ def get_shell_value(command, args, callback=None):
 def is_ping(ip, count, callback=None):
     param = '-n' if platform.system().lower() == 'windows' else '-c'
     command = ['ping', param, str(count), ip]
-    output = subprocess.check_output(command)
-    result = 'unreachable' not in str(output) and 'could not find' not in str(output) and 'time out' not in str(output)
+    try:
+        output = subprocess.check_output(command)
+        result = ('unreachable'.upper() not in str(output).upper() and
+                  'could not find'.upper() not in str(output).upper() and
+                  'time out'.upper() not in str(output).upper())
+    except:
+        result = False
     if callback is not None:
         callback(result)
     else:
