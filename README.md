@@ -55,7 +55,9 @@ There are some embedded metrics in the Exporter:
 - Chassis temperature
 - CPU temperature
 
-The Default Application config is (no metrics are configured):
+Default config stored in `./configs/config.json` file. To change it the `app_config.CONFIG_METRICS_FILE_NAME` variable need to be changed.
+
+The Default Application config is (no custom metrics are configured):
 ```json
 {
   "monitor": {
