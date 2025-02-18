@@ -213,7 +213,7 @@ python ./main.py
 #### System service (preferred option)<a id='StartService' />
 Prepare the [dasExporter.service](dasExporter.service) file. Then launch commands:
 ```shell
-sudo ln -s "$( cd -- $(dirname $0) >/dev/null 2>&1 ; pwd -P )/dasExporter.service" /etc/systemd/system/dasExporter.service
+sudo ln -s "$( pwd -P )/dasExporter.service" /etc/systemd/system/dasExporter.service
 sudo systemctl daemon-reload
 sudo systemctl start dasExporter
 sudo systemctl enable dasExporter
