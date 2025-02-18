@@ -35,7 +35,7 @@ def read_prop(filepath, sep='=', comment_char='#'):
                 conf[key] = value
     return conf
 
-def read_yaml(name): #ToDo: need to be tested!
+def read_yaml(name):
     conf = {}
     with open(name, 'r') as f:
         y_conf = yaml.safe_load(f)

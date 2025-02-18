@@ -1,9 +1,8 @@
 .idea
 .venv
 /data/
-/configs/config.json
-/configs/config.yaml
-/configs/metrics.json
-/configs/metrics_win.json
+/configs/config.*
+/configs/metrics.*
+/configs/metrics_win.*
 /__pycache__/
 /metrics/__pycache__/
