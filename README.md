@@ -55,7 +55,9 @@ There are some embedded metrics in the Exporter:
 - Chassis temperature
 - CPU temperature
 
-The Default Application config is (no metrics are configured):
+Default config stored in `./configs/config.json` file. To change it the `app_config.CONFIG_METRICS_FILE_NAME` variable need to be changed.
+
+The Default Application config is (no custom metrics are configured):
 ```json
 {
   "monitor": {
@@ -208,19 +210,19 @@ In application directory:
 python ./main.py
 ```
 
-##### System service (preferred option)<a id='StartService' />
+#### System service (preferred option)<a id='StartService' />
 Prepare the [dasExporter.service](dasExporter.service) file. Then launch commands:
 ```shell
-sudo ln -s "$( cd -- $(dirname $0) >/dev/null 2>&1 ; pwd -P )/dasExporter.service" /etc/systemd/system/dasExporter.service
+sudo ln -s "$( pwd -P )/dasExporter.service" /etc/systemd/system/dasExporter.service
 sudo systemctl daemon-reload
 sudo systemctl start dasExporter
 sudo systemctl enable dasExporter
 ```
-To view service status use `sudo systemctl status dasExporter`
-To restart the service use `sudo systemctl restart dasExporter`
-To stop the service use `sudo systemctl stop dasExporter`
+* `sudo systemctl status dasExporter` - to view service status use 
+* `sudo systemctl restart dasExporter` - to restart the service use
+* `sudo systemctl stop dasExporter` - to stop the service use
 
-##### Docker application<a id='StartDocker' />
+#### Docker application<a id='StartDocker' />
 Use provided [docker-compose.yaml](docker-compose.yaml) and [Dockerfile](Dockerfile) files to launch Exporter in docker container.
 
 **_Make sure you provided all mounts you need to be monitored in `volume` section in the `docker-compose.yaml` file and made according changes in [Disc Metrics Configuration](#DiscMetrics)._**
