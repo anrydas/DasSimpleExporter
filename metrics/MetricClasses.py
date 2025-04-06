@@ -4,7 +4,6 @@ from abc import abstractmethod
 import time
 import platform
 import subprocess
-from linecache import cache
 
 import requests
 import psutil
@@ -14,6 +13,7 @@ import app_config
 from threading import Thread
 from metrics.DataStructures import DiskData, HealthData, IcmpData, ENUM_UP_DN_STATES, InterfaceData, UptimeData, \
     SystemData, RestValueData, ShellValueData
+
 
 class AbstractMetric:
     metric_key = ""
@@ -174,7 +174,7 @@ class HealthMetric(AbstractMetric):
     def proceed_metric(self):
         for d in self.data_array:
             if d.is_need_to_update():
-                thread = Thread(target=is_health_check, args=(d.url, d.timeout, d.method, d.user, d.password, d.headers, d.set_status))
+                thread = Thread(target=is_health_check, args=(d.url, d.timeout, d.method, d.user, d.password, d.headers, d.set_data))
                 thread.start()
 
     def print_debug_info(self):
@@ -193,7 +193,7 @@ class IcmpMetric(AbstractMetric):
     def proceed_metric(self):
         for d in self.data_array:
             if d.is_need_to_update():
-                thread = Thread(target=is_ping, args=(d.ip, d.count, d.set_status))
+                thread = Thread(target=is_ping, args=(d.ip, d.count, d.set_data))
                 thread.start()
 
     def print_debug_info(self):
@@ -244,7 +244,7 @@ class RestValueMetric(AbstractMetric):
         for d in self.data_array:
             if d.is_need_to_update():
                 thread = Thread(target=get_rest_value, args=(d.url, d.timeout, d.method, d.user, d.password, d.headers,
-                                                             d.set_value, d.type, d.path))
+                                                             d.set_data, d.type, d.path))
                 thread.start()
 
     def print_debug_info(self):
@@ -263,7 +263,7 @@ class ShellValueMetric(AbstractMetric):
     def proceed_metric(self):
         for d in self.data_array:
             if d.is_need_to_update():
-                thread = Thread(target=get_shell_value, args=(d.command, d.args, d.set_value))
+                thread = Thread(target=get_shell_value, args=(d.command, d.args, d.set_data))
                 thread.start()
 
     def print_debug_info(self):
