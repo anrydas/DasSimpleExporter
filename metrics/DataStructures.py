@@ -176,7 +176,7 @@ class ShellValueData(AbstractData):
         self.value = value
         self.args = args
         self.g_value = get_gauge_metric('das_shell_value',
-                                        'Shell [name, command, server] Value ',
+                                        'Shell [name, command, server] Value',
                                         ['name', 'command', 'server'])
         self.g_value.labels(name=name, command=command, server=self.instance_prefix)
         self.set_data(value)
