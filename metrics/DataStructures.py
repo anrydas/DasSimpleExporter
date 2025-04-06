@@ -270,7 +270,7 @@ class SystemData(AbstractData):
     c_uptime: Counter
     g_cpu: Gauge
     g_memory: Gauge
-    g_chassis_temp: Gauge
+    g_tempr: Gauge
     g_cpu_temp: Gauge
     def __init__(self, interval, prefix=''):
         super().__init__('system', interval, prefix)
@@ -285,10 +285,9 @@ class SystemData(AbstractData):
         self.g_cpu.labels(server=self.instance_prefix)
         self.g_memory = get_gauge_metric('das_memory_percent', 'Memory used percent on [server]', ['server'])
         self.g_memory.labels(server=self.instance_prefix)
-        self.g_chassis_temp = get_gauge_metric('das_ChassisTemperature_current', 'Current Chassis Temperature overall on [server]', ['server'])
-        self.g_chassis_temp.labels(server=self.instance_prefix)
-        self.g_cpu_temp = get_gauge_metric('das_CpuTemperature_current', 'Current CPU Temperature overall on [server]', ['server'])
-        self.g_cpu_temp.labels(server=self.instance_prefix)
+        self.g_tempr = get_gauge_metric('das_temperature', 'Temperature of [type] overall on [server]', ['metric', 'server'])
+        self.g_tempr.labels(server=self.instance_prefix, metric='CPU')
+        self.g_tempr.labels(server=self.instance_prefix, metric='Chassis')
 
     def set_data(self):
         time_ms = get_time_millis()
@@ -320,13 +319,13 @@ class SystemData(AbstractData):
             else:
                 self.ch_temp = self.cpu_temp
 
-            self.g_chassis_temp.labels(server=self.instance_prefix).set(self.ch_temp)
-            self.g_cpu_temp.labels(server=self.instance_prefix).set(self.cpu_temp)
+            self.g_tempr.labels(server=self.instance_prefix, metric='Chassis').set(self.ch_temp)
+            self.g_tempr.labels(server=self.instance_prefix, metric='CPU').set(self.cpu_temp)
         except:
             self.ch_temp = -500
             self.cpu_temp = -500
-            self.g_chassis_temp.labels(server=self.instance_prefix).set(self.ch_temp)
-            self.g_cpu_temp.labels(server=self.instance_prefix).set(self.cpu_temp)
+            self.g_tempr.labels(server=self.instance_prefix, metric='Chassis').set(self.ch_temp)
+            self.g_tempr.labels(server=self.instance_prefix, metric='CPU').set(self.cpu_temp)
 
         self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
