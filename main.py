@@ -59,6 +59,7 @@ def is_need_to_reload_config():
 
 def print_config_info_debug():
     print('-=: Debug Mode :=-')
+    print(f'\tAPP_VERSION={app_config.APP_VERSION}')
     print(f'\tSCRIPT_PATH={app_config.SCRIPT_PATH}')
     print(f'\tCONFIGS_DIR={app_config.CONFIGS_DIR}')
     print(f'\tCONFIG_FILE_NAME={app_config.CONFIG_FILE_NAME}')
@@ -74,7 +75,7 @@ def print_config_info_debug():
     print(f'\tIS_PRINT_INFO={app_config.IS_PRINT_INFO}')
 
 def main():
-    print("-=: Collector started :=-")
+    print(f'-=: Collector started (version {app_config.APP_VERSION}) :=-')
     if os.path.isfile(app_config.CONFIG_FILE_NAME):
         config = read_app_config()
         parse_config(config)

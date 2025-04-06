@@ -11,32 +11,57 @@ ENUM_UP_DN_STATES = ['up', 'dn']
 def get_metric(name):
     return REGISTRY._names_to_collectors.get(name)
 
-def get_gauge_metric(metric_name, descr):
+def get_gauge_metric(metric_name, descr, labels=None):
+    if labels is None:
+        labels = []
     metric = get_metric(metric_name)
     if metric is None:
-        metric = Gauge(metric_name, descr)
+        if labels:
+            metric = Gauge(metric_name, descr, labelnames=labels)
+        else:
+            metric = Gauge(metric_name, descr)
     return metric
 
-def get_counter_metric(metric_name, descr):
+def get_counter_metric(metric_name, descr, labels=None):
     metric = get_metric(metric_name)
     if metric is None:
-        metric = Counter(metric_name, descr)
+        if labels:
+            metric = Counter(metric_name, descr, labelnames=labels)
+        else:
+            metric = Counter(metric_name, descr)
     return metric
 
-def get_enum_metric(metric_name, descr, states):
+def get_enum_metric(metric_name, descr, states, labels=None):
     metric = get_metric(metric_name)
     if metric is None:
-        metric = Enum(metric_name, descr, states=states)
+        if labels:
+            metric = Enum(metric_name, descr, states=states, labelnames=labels)
+        else:
+            metric = Enum(metric_name, descr, states=states)
     return metric
+
+def get_time_millis():
+    return round(time.time() * 1000)
 
 
 class AbstractData:
-    METRIC_NAME_PREFIX = 'das_'
+    g_collect: Gauge
     def __init__(self, name, interval, prefix=''):
         self.name = name
         self.interval = interval
         self.instance_prefix = prefix
         self.updated_at = int(time.time())
+        self.g_collect = get_gauge_metric('das_collect_time_ms',
+                                          'Total time spent collecting metrics [name] on [server] in milliseconds',
+                                          ['server', 'name'])
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
+        self.g_collect.labels(server=prefix, name=name)
 
     def set_update_time(self):
         self.updated_at = int(time.time())
@@ -44,11 +69,8 @@ class AbstractData:
     def is_need_to_update(self):
         return self.updated_at + self.interval <= int(time.time())
 
-    def get_metric_name(self, metric_text, name):
-        return (self.METRIC_NAME_PREFIX +
-                metric_text + '_' +
-                (self.instance_prefix + '_' if self.instance_prefix else '') +
-                name)
+    def set_collect_time(self, value=0):
+        self.g_collect.labels(server=self.instance_prefix, name=self.name).set(value)
 
     def print_trigger_info(self):
         if app_config.IS_PRINT_INFO:
@@ -56,24 +78,27 @@ class AbstractData:
 
 
 class DiskData(AbstractData):
-    g_total: Gauge
-    g_used: Gauge
-    g_free: Gauge
+    g_all: Gauge
     def __init__(self, mount_point='/', total=0, used=0, free=0, interval=60, name='', prefix=''):
         super().__init__(name, interval, prefix)
         self.mount_point = mount_point
         self.total = total
         self.used = used
         self.free = free
-        self.g_total = get_gauge_metric(self.get_metric_name('disk_total_bytes', name), 'Total bytes on disk')
-        self.g_used = get_gauge_metric(self.get_metric_name('disk_used_bytes', name), 'Used bytes on disk')
-        self.g_free = get_gauge_metric(self.get_metric_name('disk_free_bytes', name), 'Free bytes on disk')
+        self.g_all = get_gauge_metric('das_disk_bytes',
+                                      'Bytes [total, used, free] on [mount_point] for [server]',
+                                      ['name', 'mount', 'server', 'metric'])
+        self.g_all.labels(name=name, mount=mount_point, server=self.instance_prefix, metric='total')
+        self.g_all.labels(name=name, mount=mount_point, server=self.instance_prefix, metric='used')
+        self.g_all.labels(name=name, mount=mount_point, server=self.instance_prefix, metric='free')
         self.set_data(total, used, free)
 
     def set_data(self, total, used, free):
-        self.g_total.set(total)
-        self.g_used.set(used)
-        self.g_free.set(free)
+        time_ms = get_time_millis()
+        self.g_all.labels(name=self.name, mount=self.mount_point, server=self.instance_prefix, metric='total').set(total)
+        self.g_all.labels(name=self.name, mount=self.mount_point, server=self.instance_prefix, metric='used').set(used)
+        self.g_all.labels(name=self.name, mount=self.mount_point, server=self.instance_prefix, metric='free').set(free)
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -91,13 +116,17 @@ class HealthData(AbstractData):
         self.user = user
         self.password = password
         self.headers = headers
-        metric_name = self.get_metric_name('service_health', name)
-        self.e_state = get_enum_metric(metric_name, 'Service health', ENUM_UP_DN_STATES)
-        self.set_status(is_up)
+        self.e_state = get_enum_metric('das_service_health',
+                                       'Service [name, url, method, server] health',
+                                       ENUM_UP_DN_STATES,['name', 'url', 'method', 'server'])
+        self.e_state.labels(name=name, url=url, method=method, server=self.instance_prefix)
+        self.set_data(is_up)
 
-    def set_status(self, is_up):
+    def set_data(self, is_up):
+        time_ms = get_time_millis()
         self.is_up = is_up
-        self.e_state.state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
+        self.e_state.labels(name=self.name, url=self.url, method=self.method, server=self.instance_prefix).state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -118,17 +147,21 @@ class RestValueData(AbstractData):
         self.value = value
         self.type = result_type
         self.path = result_path
-        metric_name = self.get_metric_name('rest_value', name)
-        self.g_value = get_gauge_metric(metric_name, 'Remote REST API Value ' + name)
-        self.set_value(value)
+        self.g_value = get_gauge_metric('das_rest_value',
+                                        'Remote REST API [name, url, method, server] Value',
+                                        ['name', 'url', 'method', 'server'])
+        self.g_value.labels(name=name, url=url, method=method, server=self.instance_prefix)
+        self.set_data(value)
 
-    def set_value(self, value):
+    def set_data(self, value):
+        time_ms = get_time_millis()
         self.value = value
         try:
-            self.g_value.set(int(value))
+            self.g_value.labels(name=self.name, url=self.url, method=self.method, server=self.instance_prefix).set(int(value))
         except:
-            self.g_value.set(0)
+            self.g_value.labels(name=self.name, url=self.url, method=self.method, server=self.instance_prefix).set(0)
 
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -142,17 +175,21 @@ class ShellValueData(AbstractData):
         self.command = command
         self.value = value
         self.args = args
-        metric_name = self.get_metric_name('shell_value', name)
-        self.g_value = get_gauge_metric(metric_name, 'Shell Value ' + name)
-        self.set_value(value)
+        self.g_value = get_gauge_metric('das_shell_value',
+                                        'Shell [name, command, server] Value',
+                                        ['name', 'command', 'server'])
+        self.g_value.labels(name=name, command=command, server=self.instance_prefix)
+        self.set_data(value)
 
-    def set_value(self, value):
+    def set_data(self, value):
+        time_ms = get_time_millis()
         self.value = value
         try:
-            self.g_value.set(int(value))
+            self.g_value.labels(name=self.name, command=self.command, server=self.instance_prefix).set(int(value))
         except:
-            self.g_value.set(0)
+            self.g_value.labels(name=self.name, command=self.command, server=self.instance_prefix).set(0)
 
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -164,38 +201,44 @@ class IcmpData(AbstractData):
         self.ip = ip
         self.count = count
         self.is_up = is_up
-        metric_name = self.get_metric_name('host_available', name)
-        self.e_state = get_enum_metric(metric_name, 'Host availability', ENUM_UP_DN_STATES)
-        self.set_status(is_up)
+        self.e_state = get_enum_metric('das_host_available',
+                                       'Host [name, ip, server] availability',
+                                       ENUM_UP_DN_STATES, ['name', 'ip', 'server'])
+        self.e_state.labels(name=name, ip=ip, server=self.instance_prefix)
+        self.set_data(is_up)
 
-    def set_status(self, is_up):
+    def set_data(self, is_up):
+        time_ms = get_time_millis()
         self.is_up = is_up
-        self.e_state.state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
+        self.e_state.labels(name=self.name, ip=self.ip, server=self.instance_prefix).state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
 
 class InterfaceData(AbstractData):
-    g_sent: Counter
-    g_receive: Counter
+    g_all: Counter
     def __init__(self, name, iface, interval, sent, receive, prefix=''):
         super().__init__(name, interval, prefix)
         self.iface = iface
         self.sent = sent
         self.receive = receive
-        sent_metric_name = self.get_metric_name('net_interface_sent_bytes', name)
-        self.g_sent = get_counter_metric(sent_metric_name, 'Network Interface bytes sent')
-        receive_metric_name = self.get_metric_name('net_interface_receive_bytes', name)
-        self.g_receive = get_counter_metric(receive_metric_name, 'Network Interface bytes receive')
+        self.g_all = get_counter_metric('das_net_interface_bytes',
+                                        'Network Interface [name, server, metric=[sent,receive]] bytes',
+                                        ['name', 'server', 'metric'])
+        self.g_all.labels(name=name, server=self.instance_prefix, metric='sent')
+        self.g_all.labels(name=name, server=self.instance_prefix, metric='receive')
         self.set_data(sent, receive)
 
     def set_data(self, sent, receive):
+        time_ms = get_time_millis()
         sent_delta = sent - self.sent
         recv_delta = receive - self.receive
         self.sent = sent
         self.receive = receive
-        self.g_sent.inc(sent_delta)
-        self.g_receive.inc(recv_delta)
+        self.g_all.labels(name=self.name, server=self.instance_prefix, metric='sent').inc(sent_delta)
+        self.g_all.labels(name=self.name, server=self.instance_prefix, metric='receive').inc(recv_delta)
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -206,14 +249,18 @@ class UptimeData(AbstractData):
     def __init__(self, interval, prefix=''):
         super().__init__('uptime', interval, prefix)
         self.uptime = 0
-        metric_name = self.get_metric_name('exporter', self.name)
-        self.c_uptime = get_counter_metric(metric_name, 'Exporter Uptime in seconds')
+        self.c_uptime = get_counter_metric('das_exporter',
+                                           'Exporter Uptime for [server] in seconds',
+                                           ['server'])
+        self.c_uptime.labels(server=self.instance_prefix)
         self.set_data()
 
     def set_data(self):
+        time_ms = get_time_millis()
         uptime = int(time.time()) - self.START_TIME
-        self.c_uptime.inc(uptime - self.uptime)
+        self.c_uptime.labels(server=self.instance_prefix).inc(uptime - self.uptime)
         self.uptime = uptime
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
@@ -232,23 +279,24 @@ class SystemData(AbstractData):
         self.set_data()
 
     def init_metrics(self):
-        uptime_metric_name = self.get_metric_name(self.name, 'uptime_seconds')
-        self.c_uptime = get_counter_metric(uptime_metric_name, 'System uptime')
-        cpu_metric_name = self.get_metric_name(self.name, 'cpu_percent')
-        self.g_cpu = get_gauge_metric(cpu_metric_name, 'CPU used percent')
-        mem_metric_name = self.get_metric_name(self.name, 'memory_percent')
-        self.g_memory = get_gauge_metric(mem_metric_name, 'Memory used percent')
-        chassis_temp_metric_name = self.get_metric_name(self.name, 'ChassisTemperature_current')
-        self.g_chassis_temp = get_gauge_metric(chassis_temp_metric_name, 'Current Chassis Temperature overall')
-        cpu_temp_metric_name = self.get_metric_name(self.name, 'CpuTemperature_current')
-        self.g_cpu_temp = get_gauge_metric(cpu_temp_metric_name, 'Current CPU Temperature overall')
+        self.c_uptime = get_counter_metric('das_uptime_seconds', 'System uptime on [server]', ['server'])
+        self.c_uptime.labels(server=self.instance_prefix)
+        self.g_cpu = get_gauge_metric('das_cpu_percent', 'CPU used percent on [server]', ['server'])
+        self.g_cpu.labels(server=self.instance_prefix)
+        self.g_memory = get_gauge_metric('das_memory_percent', 'Memory used percent on [server]', ['server'])
+        self.g_memory.labels(server=self.instance_prefix)
+        self.g_chassis_temp = get_gauge_metric('das_ChassisTemperature_current', 'Current Chassis Temperature overall on [server]', ['server'])
+        self.g_chassis_temp.labels(server=self.instance_prefix)
+        self.g_cpu_temp = get_gauge_metric('das_CpuTemperature_current', 'Current CPU Temperature overall on [server]', ['server'])
+        self.g_cpu_temp.labels(server=self.instance_prefix)
 
     def set_data(self):
+        time_ms = get_time_millis()
         uptime = int(time.time()) - self.BOOT_TIME
-        self.c_uptime.inc(uptime - self.uptime)
+        self.c_uptime.labels(server=self.instance_prefix).inc(uptime - self.uptime)
         self.uptime = uptime
         self.memory = psutil.virtual_memory().percent
-        self.g_memory.set(self.memory)
+        self.g_memory.labels(server=self.instance_prefix).set(self.memory)
         Thread(target=self.set_cpu_percent()).run()
 
         try:
@@ -272,20 +320,21 @@ class SystemData(AbstractData):
             else:
                 self.ch_temp = self.cpu_temp
 
-            self.g_chassis_temp.set(self.ch_temp)
-            self.g_cpu_temp.set(self.cpu_temp)
+            self.g_chassis_temp.labels(server=self.instance_prefix).set(self.ch_temp)
+            self.g_cpu_temp.labels(server=self.instance_prefix).set(self.cpu_temp)
         except:
             self.ch_temp = -500
             self.cpu_temp = -500
-            self.g_chassis_temp.set(self.ch_temp)
-            self.g_cpu_temp.set(self.cpu_temp)
+            self.g_chassis_temp.labels(server=self.instance_prefix).set(self.ch_temp)
+            self.g_cpu_temp.labels(server=self.instance_prefix).set(self.cpu_temp)
 
+        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
 
     def set_cpu_percent(self):
         self.cpu = psutil.cpu_percent(1)
-        self.g_cpu.set(self.cpu)
+        self.g_cpu.labels(server=self.instance_prefix).set(self.cpu)
 
 
 if __name__ == '__main__':

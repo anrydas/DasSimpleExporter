@@ -14,6 +14,8 @@ Create configurable lightweight application to collect some metrics
 - hot reload metrics if configuration changed
 - could be used as [regular application](#StartRegular), as [systemctl service](#StartService) or a [Docker application](#StartDocker)
 - supports JSON, PROPERTIES and YAML configuration formats
+- [internal metrics](#Internal) to show how time spent on update every other metrics
+- [metrics labels](#Labels) support
 
 ### 📌 Using
 _To use specific configuration format the `app_config.CONFIG_FILE_NAME` variable need to be changed. The default config file format is **JSON**_
@@ -79,6 +81,12 @@ The Default Application config is (no custom metrics are configured):
 **Common parameters:**
 - `name` - parameter used in every metric to identify it. **Required**.
 - `interval` - time interval in seconds the metric will be updated. **Required**.
+
+#### Metrics Labels<a id='Labels' />
+From version 2.0 the Application supports Labels. See [Metrics Names](MetricName) for details.
+
+#### Internal metrics<a id='Internal' />
+From version 2.0 the Application supports internal metrics to collect time. See [Metrics Names](MetricName) for details.
 
 #### Disk (or mount point) Metrics<a id='DiscMetrics' />
 **_Monitors the Mount Point's sizes: `total`, `used`, `free` space in bytes_**
@@ -187,11 +195,21 @@ The Default Application config is (no custom metrics are configured):
 - `args` - CLI arguments to be provided to the command
 In example above the metric will return integer value 3.
 
-<a id='MetricName' />**The metric name creates as follows:**
-- uses Metric Prefix, actually `das_`
-- uses `metric_text` given to every metric while it creating
-- uses `instance_prefix` given in metric configuration
-- uses `name` given in metric configuration
+<a id='MetricName' />**The metric names:**
+From version 2.0 there are following metric names used
+- `das_collect_time_ms` - Total time spent collecting metrics  in milliseconds; Labels: **name**, Total time spent collecting metrics [name] on [server] in milliseconds
+- `das_disk_bytes` - Bytes (total, used, free) on (mount_point) for (server); Labels: **total, used, free, mount_point, server**
+- `das_service_health` - Service health; Labels **name, url, method, server**
+- `das_rest_value` - Remote REST API Value; Labels **name, url, method, server**
+- `das_shell_value` - Shell Value; Labels: **name, command, server**
+- `das_host_available` - Host availability; Labels **name, ip, server**
+- `das_net_interface_bytes` - Network Interface bytes; Labels: **name, server, metric**=(sent|receive)
+- `das_exporter` - Exporter Uptime for **server** in seconds
+- `das_uptime_seconds` - System uptime on **server**
+- `das_cpu_percent` - CPU used percent on **server**
+- `das_memory_percent` - Memory used percent on **server**
+- `das_ChassisTemperature_current` - Current Chassis Temperature overall on **server** 
+- `das_CpuTemperature_current` - Current CPU Temperature overall on **server**
 **Note:** there are no doubles in metrics names supported by Prometheus. If so the exception occurs ant the application will be stopped.
 
 ### 🚀 Launching the application

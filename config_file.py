@@ -16,7 +16,7 @@ def read_config(name):
         raise Exception("Wrong file type")
 
 def read_json(name):
-    with open(name, 'r') as f:
+    with open(name, 'r', encoding='utf-8') as f:
         j_conf = json.load(f)
         conf = {}
         for key, value in j_conf.items():
@@ -25,7 +25,7 @@ def read_json(name):
 
 def read_prop(filepath, sep='=', comment_char='#'):
     conf = {}
-    with open(filepath, "rt") as f:
+    with open(filepath, "rt", encoding='utf-8') as f:
         for line in f:
             l = line.strip()
             if l and not l.startswith(comment_char):
@@ -37,7 +37,7 @@ def read_prop(filepath, sep='=', comment_char='#'):
 
 def read_yaml(name):
     conf = {}
-    with open(name, 'r') as f:
+    with open(name, 'r', encoding='utf-8') as f:
         y_conf = yaml.safe_load(f)
         for key, value in y_conf.items():
             conf[key] = value
