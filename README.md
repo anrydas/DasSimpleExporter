@@ -203,13 +203,12 @@ From version 2.0 there are following metric names used
 - `das_rest_value` - Remote REST API Value; Labels **name, url, method, server**
 - `das_shell_value` - Shell Value; Labels: **name, command, server**
 - `das_host_available` - Host availability; Labels **name, ip, server**
-- `das_net_interface_bytes` - Network Interface bytes; Labels: **name, server, metric**=(sent|receive)
+- `das_net_interface_bytes` - Network Interface bytes; Labels: **name, server, metric=(sent|receive)**
 - `das_exporter` - Exporter Uptime for **server** in seconds
 - `das_uptime_seconds` - System uptime on **server**
 - `das_cpu_percent` - CPU used percent on **server**
 - `das_memory_percent` - Memory used percent on **server**
-- `das_ChassisTemperature_current` - Current Chassis Temperature overall on **server** 
-- `das_CpuTemperature_current` - Current CPU Temperature overall on **server**
+- `das_temperature` - Temperature overall; Labels **server**, **metric=(CPU|Chassis)**;
 **Note:** there are no doubles in metrics names supported by Prometheus. If so the exception occurs ant the application will be stopped.
 
 ### 🚀 Launching the application

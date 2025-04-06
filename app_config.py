@@ -1,6 +1,6 @@
 import os
 
-APP_VERSION="2.0"
+APP_VERSION="2.1"
 SCRIPT_PATH = os.path.dirname(__file__)
 CONFIGS_DIR = SCRIPT_PATH + "/configs"
 CONFIG_FILE_NAME = CONFIGS_DIR + "/config.json"
