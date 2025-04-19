@@ -44,12 +44,12 @@ def parse_config(cfg):
 
 def init_metric_entities(data):
     return {
-        M.DiskMetric(data, app_config.INSTANCE_PREFIX),
-        M.HealthMetric(data, app_config.INSTANCE_PREFIX),
-        M.IcmpMetric(data, app_config.INSTANCE_PREFIX),
-        M.InterfaceMetric(data, app_config.INSTANCE_PREFIX),
-        M.RestValueMetric(data, app_config.INSTANCE_PREFIX),
-        M.ShellValueMetric(data, app_config.INSTANCE_PREFIX),
+        M.DiskMetric(data),
+        M.HealthMetric(data),
+        M.IcmpMetric(data),
+        M.InterfaceMetric(data),
+        M.RestValueMetric(data),
+        M.ShellValueMetric(data),
         M.UptimeMetric(app_config.UPTIME_UPDATE_SECONDS),
         M.SystemMetric(app_config.SYSTEM_UPDATE_SECONDS)
     }

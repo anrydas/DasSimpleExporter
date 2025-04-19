@@ -249,7 +249,7 @@ class UptimeData(AbstractData):
     def __init__(self, interval, prefix=''):
         super().__init__('uptime', interval, prefix)
         self.uptime = 0
-        self.c_uptime = get_counter_metric('das_exporter',
+        self.c_uptime = get_counter_metric('das_exporter_uptime',
                                            'Exporter Uptime for [server] in seconds',
                                            ['server'])
         self.c_uptime.labels(server=self.instance_prefix)
