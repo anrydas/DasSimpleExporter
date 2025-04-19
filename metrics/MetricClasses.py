@@ -18,8 +18,10 @@ from metrics.DataStructures import DiskData, HealthData, IcmpData, ENUM_UP_DN_ST
 class AbstractMetric:
     metric_key = ""
     config = {}
+    prefix = ""
     def __init__(self, key, config):
         self.metric_key = key
+        self.prefix = app_config.INSTANCE_PREFIX
         if key and key in config:
             self.config = config[key]
         self.data_array = []
@@ -134,12 +136,12 @@ def get_next_update_time(d):
 
 
 class DiskMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('disk', config)
         for d in self.config:
             mount_point, interval, name = d['path'], d['interval'], d['name']
             total, used, free = shutil.disk_usage(mount_point)
-            self.data_array.append(DiskData(mount_point, total, used, free, interval, name, prefix))
+            self.data_array.append(DiskData(mount_point, total, used, free, interval, name, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -154,7 +156,7 @@ class DiskMetric(AbstractMetric):
 
 
 class HealthMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('health', config)
         for d in self.config:
             name, url, interval, timeout, method = d['name'], d['url'], d['interval'], d['timeout'], d['method']
@@ -169,7 +171,7 @@ class HealthMetric(AbstractMetric):
             else:
                 headers = ''
             result = is_health_check(url, timeout, method, user, pwd, headers)
-            self.data_array.append(HealthData(name, url, interval, timeout, result, method, user, pwd, headers, prefix))
+            self.data_array.append(HealthData(name, url, interval, timeout, result, method, user, pwd, headers, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -183,12 +185,12 @@ class HealthMetric(AbstractMetric):
 
 
 class IcmpMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('ping', config)
         for d in self.config:
             name, ip, count, interval = d['name'], d['ip'], d['count'], d['interval']
             result = is_ping(ip, count)
-            self.data_array.append(IcmpData(name, ip, count, interval, result, prefix))
+            self.data_array.append(IcmpData(name, ip, count, interval, result, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -202,12 +204,12 @@ class IcmpMetric(AbstractMetric):
 
 
 class InterfaceMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('iface', config)
         for d in self.config:
             name, iface, interval = d['name'], d['iface'], d['interval']
             result = get_net_iface_stat(iface)
-            self.data_array.append(InterfaceData(name, iface, interval, result.bytes_sent, result.bytes_recv, prefix))
+            self.data_array.append(InterfaceData(name, iface, interval, result.bytes_sent, result.bytes_recv, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -221,7 +223,7 @@ class InterfaceMetric(AbstractMetric):
 
 
 class RestValueMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('rest_value', config)
         for d in self.config:
             name, url, interval, timeout, method = d['name'], d['url'], d['interval'], d['timeout'], d['method']
@@ -238,7 +240,7 @@ class RestValueMetric(AbstractMetric):
             result_type, result_path = d['result_type'], d['result_path']
             result = get_rest_value(url=url, timeout=timeout, method=method, user=user, pwd=pwd, headers=headers,
                                     result_type=result_type, path=result_path)
-            self.data_array.append(RestValueData(name, url, interval, timeout, result, method, user, pwd, headers, prefix, result_type, result_path))
+            self.data_array.append(RestValueData(name, url, interval, timeout, result, method, user, pwd, headers, self.prefix, result_type, result_path))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -253,12 +255,12 @@ class RestValueMetric(AbstractMetric):
 
 
 class ShellValueMetric(AbstractMetric):
-    def __init__(self, config, prefix=''):
+    def __init__(self, config):
         super().__init__('shell_value', config)
         for d in self.config:
             name, command, interval, args = d['name'], d['command'], d['interval'], d['args']
             result = get_shell_value(command, args)
-            self.data_array.append(ShellValueData(name, interval, command, result, args, prefix))
+            self.data_array.append(ShellValueData(name, interval, command, result, args, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -274,7 +276,7 @@ class ShellValueMetric(AbstractMetric):
 class UptimeMetric(AbstractMetric):
     def __init__(self, interval):
         super().__init__(None, {})
-        self.data_array.append(UptimeData(interval))
+        self.data_array.append(UptimeData(interval, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
@@ -289,7 +291,7 @@ class UptimeMetric(AbstractMetric):
 class SystemMetric(AbstractMetric):
     def __init__(self, interval):
         super().__init__(None, {})
-        self.data_array.append(SystemData(interval, app_config.INSTANCE_PREFIX))
+        self.data_array.append(SystemData(interval, self.prefix))
 
     def proceed_metric(self):
         for d in self.data_array:
