@@ -36,6 +36,7 @@ class AbstractMetric:
 
 
 def is_health_check(url, timeout, method, user, pwd, headers, callback=None):
+    time_ms = get_time_millis()
     session = requests.Session()
     if user and pwd:
         session.auth = (user, pwd)
@@ -48,13 +49,15 @@ def is_health_check(url, timeout, method, user, pwd, headers, callback=None):
         )
         result = response.status_code == 200
         if callback is not None:
-            callback(result)
+            working_time = get_time_millis() - time_ms
+            callback(result, working_time)
         else:
             return result
     except (requests.ConnectTimeout, requests.exceptions.ConnectionError) as e:
         return False
 
 def get_rest_value(url, timeout, method, user, pwd, headers, callback=None, result_type='single', path=''):
+    time_ms = get_time_millis()
     session = requests.Session()
     if user and pwd:
         session.auth = (user, pwd)
@@ -70,7 +73,8 @@ def get_rest_value(url, timeout, method, user, pwd, headers, callback=None, resu
         if not result.isalnum():
             result = 0
         if callback is not None:
-            callback(result)
+            working_time = get_time_millis() - time_ms
+            callback(result, working_time)
         else:
             return result
     except (requests.ConnectTimeout, requests.exceptions.ConnectionError) as e:
@@ -98,6 +102,7 @@ def parse_response(resp, path):
             return ''
 
 def get_shell_value(command, args, callback=None):
+    time_ms = get_time_millis()
     cmd = [command, ' '.join(str(s) for s in args)]
     try:
         output = subprocess.check_output(cmd)
@@ -109,11 +114,13 @@ def get_shell_value(command, args, callback=None):
         result = 0
 
     if callback is not None:
-        callback(result)
+        working_time = get_time_millis() - time_ms
+        callback(result, working_time)
     else:
         return result
 
 def is_ping(ip, count, callback=None):
+    time_ms = get_time_millis()
     param = '-n' if platform.system().lower() == 'windows' else '-c'
     command = ['ping', param, str(count), ip]
     try:
@@ -123,8 +130,10 @@ def is_ping(ip, count, callback=None):
                   'time out'.upper() not in str(output).upper())
     except:
         result = False
+
     if callback is not None:
-        callback(result)
+        working_time = get_time_millis() - time_ms
+        callback(result, working_time)
     else:
         return result
 
@@ -134,6 +143,8 @@ def get_net_iface_stat(name):
 def get_next_update_time(d):
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(d.updated_at + d.interval))
 
+def get_time_millis():
+    return round(time.time() * 1000)
 
 class DiskMetric(AbstractMetric):
     def __init__(self, config):

@@ -122,13 +122,16 @@ class HealthData(AbstractData):
         self.e_state.labels(name=name, url=url, method=method, server=self.instance_prefix)
         self.set_data(is_up)
 
-    def set_data(self, is_up):
+    def set_data(self, is_up, working_time = None):
         time_ms = get_time_millis()
         self.is_up = is_up
         self.e_state.labels(name=self.name, url=self.url, method=self.method, server=self.instance_prefix).state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
-        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
+        if working_time:
+            self.set_collect_time(working_time)
+        else:
+            self.set_collect_time(get_time_millis() - time_ms)
 
 
 class RestValueData(AbstractData):
@@ -153,7 +156,7 @@ class RestValueData(AbstractData):
         self.g_value.labels(name=name, url=url, method=method, server=self.instance_prefix)
         self.set_data(value)
 
-    def set_data(self, value):
+    def set_data(self, value, working_time = None):
         time_ms = get_time_millis()
         self.value = value
         try:
@@ -161,9 +164,12 @@ class RestValueData(AbstractData):
         except:
             self.g_value.labels(name=self.name, url=self.url, method=self.method, server=self.instance_prefix).set(0)
 
-        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
+        if working_time:
+            self.set_collect_time(working_time)
+        else:
+            self.set_collect_time(get_time_millis() - time_ms)
 
 
 class ShellValueData(AbstractData):
@@ -181,7 +187,7 @@ class ShellValueData(AbstractData):
         self.g_value.labels(name=name, command=command, server=self.instance_prefix)
         self.set_data(value)
 
-    def set_data(self, value):
+    def set_data(self, value, working_time = None):
         time_ms = get_time_millis()
         self.value = value
         try:
@@ -189,9 +195,12 @@ class ShellValueData(AbstractData):
         except:
             self.g_value.labels(name=self.name, command=self.command, server=self.instance_prefix).set(0)
 
-        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
+        if working_time:
+            self.set_collect_time(working_time)
+        else:
+            self.set_collect_time(get_time_millis() - time_ms)
 
 
 class IcmpData(AbstractData):
@@ -207,13 +216,16 @@ class IcmpData(AbstractData):
         self.e_state.labels(name=name, ip=ip, server=self.instance_prefix)
         self.set_data(is_up)
 
-    def set_data(self, is_up):
+    def set_data(self, is_up, working_time = None):
         time_ms = get_time_millis()
         self.is_up = is_up
         self.e_state.labels(name=self.name, ip=self.ip, server=self.instance_prefix).state(ENUM_UP_DN_STATES[0] if is_up else ENUM_UP_DN_STATES[1])
-        self.set_collect_time(get_time_millis() - time_ms)
         self.set_update_time()
         self.print_trigger_info()
+        if working_time:
+            self.set_collect_time(working_time)
+        else:
+            self.set_collect_time(get_time_millis() - time_ms)
 
 
 class InterfaceData(AbstractData):
